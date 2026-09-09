@@ -43,6 +43,13 @@
         <ion-icon slot="start" name="document-text-outline"></ion-icon>
         Probar servidor
       </ion-button>
+      <ion-button
+        (click)="generarInformePDF()"
+        [disabled]="cargando() || importando() || generandoInforme()"
+        title="Generar informe PDF con la tabla de restaurantes filtrados">
+        <ion-icon slot="start" name="document-text-outline"></ion-icon>
+        Informe PDF
+      </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>

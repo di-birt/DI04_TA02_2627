@@ -28,6 +28,7 @@ import {
 import { RouterLink } from '@angular/router';
 import { Restaurante } from '../interface/restaurante';
 import { RestauranteService } from '../services/restaurante.service';
+import { InformeService } from '../services/informe.service';
 import { AddRestauranteModalComponent } from '../components/add-restaurante-modal/add-restaurante-modal.component';
 import { GraficosComponent } from '../components/graficos/graficos.component';
 import restaurantesJSON from '../../assets/datos/restaurantes.json';
@@ -47,6 +48,7 @@ export class HomePage {
   // Es equivalente a declararlos como parámetros en el constructor.
   // ─────────────────────────────────────────────────────────────────────────
   restauranteService = inject(RestauranteService);
+  informeService      = inject(InformeService);
   alertCtrl          = inject(AlertController);
   toastCtrl          = inject(ToastController);
   loadingCtrl        = inject(LoadingController);
@@ -95,6 +97,9 @@ export class HomePage {
 
   /** Vista activa del segment: tabla o gráficos */
   vistaActual = signal<'tabla' | 'graficos'>('tabla');
+
+  /** Bloquea el botón mientras se genera el informe PDF en el servidor */
+  generandoInforme = signal(false);
 
   // ─────────────────────────────────────────────────────────────────────────
   // CONSTRUCTOR
@@ -345,6 +350,26 @@ export class HomePage {
     a.href = url;
     a.download = 'restaurantes_backup.json';
     a.click();
+  }
+
+  /**
+   * Genera el informe PDF con los restaurantes actualmente filtrados.
+   * El HTML se construye en Angular; el servidor (Puppeteer) solo lo imprime.
+   */
+  async generarInformePDF() {
+    this.generandoInforme.set(true);
+    try {
+      await this.informeService.generarInformePDF(this.restaurantesFiltrados(), {
+        busqueda: this.textoBusqueda().trim(),
+        territorios: this.territoriosSeleccionados(),
+        localidades: this.localidadesSeleccionadas(),
+      });
+      await this.mostrarToast('Informe generado correctamente.', 'success');
+    } catch {
+      await this.mostrarToast('No se pudo generar el informe. ¿Está el servidor arrancado con "npm start" en /server?', 'danger');
+    } finally {
+      this.generandoInforme.set(false);
+    }
   }
 
   // ─────────────────────────────────────────────────────────────────────────
